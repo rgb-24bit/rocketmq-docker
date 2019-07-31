@@ -18,7 +18,7 @@
 FROM centos:7
 
 RUN yum install -y java-1.8.0-openjdk-devel.x86_64 unzip gettext nmap-ncat openssl, which gnupg, telnet \
- && yum clean all -y
+  && yum clean all -y
 
 # FROM openjdk:8-jdk
 # RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -34,7 +34,7 @@ ARG gid=3000
 # If you bind mount a volume from the host or a data container,
 # ensure you use the same uid
 RUN groupadd -g ${gid} ${group} \
-    && useradd -u ${uid} -g ${gid} -m -s /bin/bash ${user}
+  && useradd -u ${uid} -g ${gid} -m -s /bin/bash ${user}
 
 ARG version
 
@@ -45,22 +45,22 @@ ENV ROCKETMQ_VERSION ${version}
 ENV ROCKETMQ_HOME  /home/rocketmq/rocketmq-${ROCKETMQ_VERSION}
 
 # Java home
-ENV JAVA_HOME  /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64
+# ENV JAVA_HOME  /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64
 
 WORKDIR  ${ROCKETMQ_HOME}
 
-RUN set -eux; \
-    curl -s https://dist.apache.org/repos/dist/release/rocketmq/${ROCKETMQ_VERSION}/rocketmq-all-${ROCKETMQ_VERSION}-bin-release.zip -o rocketmq.zip; \
-    curl -s https://dist.apache.org/repos/dist/release/rocketmq/${ROCKETMQ_VERSION}/rocketmq-all-${ROCKETMQ_VERSION}-bin-release.zip.asc -o rocketmq.zip.asc; \
-    #https://www.apache.org/dist/rocketmq/KEYS
-	curl -s https://www.apache.org/dist/rocketmq/KEYS -o KEYS; \
-	\
-	gpg --import KEYS; \
-    gpg --batch --verify rocketmq.zip.asc rocketmq.zip ; \
-    unzip rocketmq.zip ; \
-	mv rocketmq-all*/* . ; \
-	rmdir rocketmq-all*  ; \
-	rm rocketmq.zip rocketmq.zip.asc KEYS
+RUN echo export JAVA_HOME='$(readlink -f /usr/bin/java | sed "s:/bin/java::")' >> /etc/profile ; \
+  curl -s http://mirrors.tuna.tsinghua.edu.cn/apache/rocketmq/${ROCKETMQ_VERSION}/rocketmq-all-${ROCKETMQ_VERSION}-bin-release.zip -o rocketmq.zip; \
+  curl -s http://mirrors.tuna.tsinghua.edu.cn/apache/rocketmq/${ROCKETMQ_VERSION}/rocketmq-all-${ROCKETMQ_VERSION}-bin-release.zip.asc -o rocketmq.zip.asc; \
+  #https://www.apache.org/dist/rocketmq/KEYS
+  curl -s http://mirrors.tuna.tsinghua.edu.cn/apache/rocketmq/KEYS -o KEYS; \
+  \
+  gpg --import KEYS; \
+  gpg --batch --verify rocketmq.zip.asc rocketmq.zip ; \
+  unzip rocketmq.zip ; \
+  mv rocketmq-all*/* . ; \
+  rmdir rocketmq-all*  ; \
+  rm rocketmq.zip rocketmq.zip.asc KEYS
 
 # add scripts
 COPY scripts/ ${ROCKETMQ_HOME}/bin/
@@ -72,16 +72,16 @@ EXPOSE 9876
 
 # add customized scripts for namesrv
 RUN mv ${ROCKETMQ_HOME}/bin/runserver-customize.sh ${ROCKETMQ_HOME}/bin/runserver.sh \
- && chmod a+x ${ROCKETMQ_HOME}/bin/runserver.sh \
- && chmod a+x ${ROCKETMQ_HOME}/bin/mqnamesrv
+  && chmod a+x ${ROCKETMQ_HOME}/bin/runserver.sh \
+  && chmod a+x ${ROCKETMQ_HOME}/bin/mqnamesrv
 
 # expose broker ports
 EXPOSE 10909 10911
 
 # add customized scripts for broker
 RUN mv ${ROCKETMQ_HOME}/bin/runbroker-customize.sh ${ROCKETMQ_HOME}/bin/runbroker.sh \
- && chmod a+x ${ROCKETMQ_HOME}/bin/runbroker.sh \
- && chmod a+x ${ROCKETMQ_HOME}/bin/mqbroker
+  && chmod a+x ${ROCKETMQ_HOME}/bin/runbroker.sh \
+  && chmod a+x ${ROCKETMQ_HOME}/bin/mqbroker
 
 # export Java options
 RUN export JAVA_OPT=" -Duser.home=/opt"
@@ -92,3 +92,4 @@ RUN sed -i 's/${JAVA_HOME}\/jre\/lib\/ext/${JAVA_HOME}\/jre\/lib\/ext:${JAVA_HOM
 USER ${user}
 
 WORKDIR ${ROCKETMQ_HOME}/bin
+
